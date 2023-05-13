@@ -1,6 +1,4 @@
 import datetime
-import json
-import requests
 import speech_recognition as sr
 import subprocess
 import time
@@ -9,6 +7,9 @@ from selenium.webdriver import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
+import requests
+import re
+
 
 paths = {
     # DAUNTLESS
@@ -42,7 +43,7 @@ paths = {
     "google chrome": "C:\Program Files\Google\Chrome\Application\chrome.exe",
 
     # DISCORD
-    #"discord": "C:\Users\gusta\AppData\Local\Discord\Update"
+    # "discord": "C:\Users\gusta\AppData\Local\Discord\Update"
 
 }
 
@@ -60,7 +61,7 @@ def falar(modelo, texto):
 
 def ouvir(modelo, recognizer):
     with sr.Microphone(1) as mic:
-        recognizer.adjust_for_ambient_noise(mic)  # se ajusa ao som ambiente (ruido)
+        recognizer.adjust_for_ambient_noise(mic)  # se ajusta ao som ambiente (ruido)
         audio = recognizer.listen(mic)  # ouve o audio pelo microfone
         fala = ''
         try:
@@ -110,20 +111,6 @@ def abrir(modelo, app):
         time.sleep(0.5)
 
 
-# def previsao_tempo(modelo, cidade="São+Paulo"):
-#     chave_api = "a6c88e8d9ff7438de77da8eb6bbbd48e"
-#     url = f"https://api.openweathermap.org/data/2.5/weather?q={cidade}&appid={chave_api}&lang=pt_br&units=metric"
-#
-#     response = requests.get(url)
-#     dados = json.loads(response.text)
-#
-#     temperatura = dados["main"]["temp"]
-#     descricao = dados["weather"][0]["description"]
-#
-#     mensagem = f"A previsão do tempo para {cidade} é de {temperatura} graus Celsius, com {descricao}."
-#     falar(modelo, mensagem)
-
-
 def formata_comando(frase):
     comandos = ["pesquisar por", "pesquise por", "pesquisa aí", "abrir", "abra", "abrir o", "abrir a", "abra o", "abra a", "abre o"
                 "abre a"]
@@ -134,3 +121,30 @@ def formata_comando(frase):
             posicao_comando = frase.find(comando)
             return frase[posicao_comando + len(comando):].strip()
     return frase
+
+
+def buscar_curiosidade(modelo):
+    falar(modelo, "Claro! Aqui vai uma curiosidade aleatória.")
+    print(f"Iris>> Claro! Aqui vai uma curiosidade aleatória.")
+    # Faz uma requisição à API do Wikipedia para buscar uma página aleatória
+    requisicao = requests.get('https://pt.wikipedia.org/w/api.php?action=query&format=json&list=random&rnnamespace=0&rnlimit=1')
+
+    # Extrai o título da página aleatória a partir da resposta da API
+    titulo_pagina = requisicao.json()['query']['random'][0]['title']
+
+    # Faz uma nova requisição à API para buscar o conteúdo da página
+    requisicao = requests.get(f'https://pt.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=1&explaintext=1&titles={titulo_pagina}')
+
+    # Extrai o texto do primeiro parágrafo do conteúdo da página
+    conteudo_pagina = requisicao.json()['query']['pages']
+    id_primeira_pagina = next(iter(conteudo_pagina))
+    primeiro_paragrafo = conteudo_pagina[id_primeira_pagina]['extract'].split('\n')[0]
+
+    # Remove referências numéricas e tags HTML do texto
+    primeiro_paragrafo = re.sub(r'\[[0-9]+]', '', primeiro_paragrafo)
+    primeiro_paragrafo = re.sub(r'<[^>]*>', '', primeiro_paragrafo)
+
+    curiosidade = primeiro_paragrafo.strip()
+    print(curiosidade)
+    falar(modelo, curiosidade)
+
