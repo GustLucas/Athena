@@ -1,6 +1,6 @@
 import pyttsx3
 import speech_recognition as sr
-from comandos import ouvir, falar, relogio, pesquisar, abrir, formata_comando  # previsao_tempo
+from comandos import ouvir, falar, relogio, pesquisar, abrir, formata_comando, buscar_curiosidade
 
 # precisamos sempre do RECOGNIZER e do MICROPHONE para fazer um reconhecimento de voz
 rec = sr.Recognizer()
@@ -26,9 +26,8 @@ while True:
         comando = formata_comando(comando)
         pesquisar(iris, rec, comando)
 
-    # elif "previsão do tempo" in comando:
-    #     cidade = formata_comando(comando)
-    #     previsao_tempo(iris)
+    elif "curiosidade" in comando:
+        buscar_curiosidade(iris)
 
     elif comando == "não":
         falar(iris, f'Ok. Adeus...')
@@ -38,3 +37,4 @@ while True:
     falar(iris, "Mais alguma coisa?")
     print("Iris >> Mais alguma coisa?")
     comando = ouvir(iris, rec)
+    
